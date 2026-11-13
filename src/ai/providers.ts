@@ -277,7 +277,7 @@ const gemini: ProviderDef = {
       url: `${GEMINI_BASE}/models/${encodeURIComponent(cfg.model)}:streamGenerateContent?alt=sse`,
       headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.apiKey },
       body: {
-        systemInstruction: { parts: [{ text: system }] },
+        system_instruction: { parts: [{ text: system }] },
         contents: messages.map((message) => ({
           role: message.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: message.content }],

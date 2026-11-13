@@ -116,7 +116,7 @@ describe('Gemini', () => {
     expect(req.headers['x-goog-api-key']).toBe('AIza');
     const contents = req.body?.contents as { role: string }[];
     expect(contents.map((c) => c.role)).toEqual(['user', 'model', 'user']);
-    expect(req.body?.systemInstruction).toEqual({ parts: [{ text: 'система' }] });
+    expect(req.body?.system_instruction).toEqual({ parts: [{ text: 'система' }] });
   });
 
   it('достаёт текст и пропускает «мысли» модели', () => {

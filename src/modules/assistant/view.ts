@@ -66,20 +66,28 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
     );
   };
 
-  const drawHistory = (): void => {
-    if (history.length === 0) {
-      drawIntro();
-      return;
-    }
+  // Номер текущего чата: если во время ответа нажали «Новый чат», старый ответ не должен попасть в новый.
+  let chatEpoch = 0;
+
+  const resetButton = (): HTMLElement => {
     const reset = h('button', { class: 'btn btn-quiet', type: 'button', style: 'align-self:center;min-height:40px' }, 'Новый чат');
     reset.addEventListener('click', () => {
+      chatEpoch++;
       controller?.abort();
       history.length = 0;
       status.replaceChildren();
       drawHistory();
     });
+    return reset;
+  };
+
+  const drawHistory = (): void => {
+    if (history.length === 0) {
+      drawIntro();
+      return;
+    }
     log.replaceChildren(
-      reset,
+      resetButton(),
       ...history.map((message) => (message.role === 'user' ? userBubble(message.content) : assistantBubble(message.content))),
     );
     scrollDown();
@@ -127,7 +135,8 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
     if (!(await checkReady())) return;
 
     const ai = await getSetting('ai');
-    if (history.length === 0) log.replaceChildren();
+    const epoch = chatEpoch;
+    if (history.length === 0) log.replaceChildren(resetButton());
     history.push({ role: 'user', content: text });
     log.append(userBubble(text));
     if (!textArg) {
@@ -178,6 +187,8 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
       controller = null;
       setBusy(false);
     }
+
+    if (epoch !== chatEpoch) return; // пока шёл ответ, начали новый чат
 
     if (answer) {
       history.push({ role: 'assistant', content: answer });

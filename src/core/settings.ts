@@ -27,7 +27,7 @@ export const CURRENCIES: { code: string; label: string }[] = [
 
 export function defaultAiSettings(): AiSettings {
   return {
-    provider: 'anthropic',
+    provider: 'gemini',
     configs: {
       anthropic: { apiKey: '', model: 'claude-opus-5-5' },
       openai: { apiKey: '', model: '' },
