@@ -24,6 +24,17 @@
   --c-study: #2f6fde;
   --c-finance: #7a59d6;
 
+  /* Диаграммы: служебные линии и подписи */
+  --chart-muted: #7d7b76;
+  --chart-grid: #e6e5e0;
+  --chart-axis: #c3c2b7;
+
+  /* Тепловая карта привычек: один оттенок, от светлого к тёмному */
+  --heat-habits-1: #bfe6d5;
+  --heat-habits-2: #7fcfae;
+  --heat-habits-3: #35a981;
+  --heat-habits-4: #0b7a62;
+
   --radius: 18px;
   --radius-s: 12px;
   --tap: 48px;
@@ -47,6 +58,15 @@
     --danger-soft: rgba(255, 107, 94, 0.16);
     --warn-bg: #3a2f0b;
     --warn-text: #ffd978;
+
+    --chart-muted: #8f8d87;
+    --chart-grid: #2f2f31;
+    --chart-axis: #48484a;
+
+    --heat-habits-1: #17392d;
+    --heat-habits-2: #1e624a;
+    --heat-habits-3: #2a9a73;
+    --heat-habits-4: #3fd6a0;
 
     --c-habits: #3fd6a0;
     --c-workouts: #ff9a4d;

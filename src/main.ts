@@ -105,7 +105,13 @@ async function boot(): Promise<void> {
   void requestPersistence();
   if (!(await getSetting('firstRunAt'))) await setSetting('firstRunAt', new Date().toISOString());
   if (!location.hash) navigate('today');
-  startRouter(ROUTES, view, onRouteChange);
+  const router = startRouter(ROUTES, view, onRouteChange);
+
+  // При смене светлой/тёмной темы перерисовываем экран, чтобы диаграммы взяли новые цвета.
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const busy = document.querySelector('.sheet-backdrop') !== null || router.current().id === 'assistant';
+    if (!busy) router.refresh();
+  });
 }
 
 boot().catch((err: unknown) => {
