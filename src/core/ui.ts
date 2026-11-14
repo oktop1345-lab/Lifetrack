@@ -59,6 +59,11 @@ const ICONS = {
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.5"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  screen: '<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 17.5h2"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>',
+  trash: '<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>',
+  camera: '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/>',
+  wave: '<path d="M3 12c2-5 4-5 6 0s4 5 6 0 4-5 6 0"/>',
 } as const;
 
 export type IconName = keyof typeof ICONS;
@@ -146,9 +151,32 @@ export function confirmSheet(opts: {
   });
 }
 
+/** Шторка с одним текстовым полем. Возвращает введённый текст или null, если закрыли. */
+export function promptSheet(opts: { title: string; label: string; value?: string; placeholder?: string; confirmLabel?: string }): Promise<string | null> {
+  return new Promise((resolve) => {
+    let answer: string | null = null;
+    const input = h('input', { class: 'input', type: 'text', value: opts.value ?? '', placeholder: opts.placeholder ?? '', maxLength: 60 });
+    const ok = h('button', { class: 'btn btn-primary', type: 'button' }, opts.confirmLabel ?? 'Сохранить');
+    const sheet = openSheet(opts.title, [field(opts.label, input), ok], () => resolve(answer));
+    const sync = (): void => {
+      ok.disabled = input.value.trim() === '';
+    };
+    input.addEventListener('input', sync);
+    sync();
+    input.focus();
+    ok.addEventListener('click', () => {
+      answer = input.value.trim();
+      sheet.close();
+    });
+  });
+}
+
 // ---------- Готовые блоки ----------
 
-export function card(title: string | null, ...children: Child[]): HTMLElement {
+/** Раздел приложения: задаёт цвет значков, меток и полосок (классы .m-* в base.css). */
+export type ModuleId = 'habits' | 'workouts' | 'study' | 'finance' | 'screen';
+
+export function card(title: Child, ...children: Child[]): HTMLElement {
   return h('section', { class: 'card' }, title ? h('h2', { class: 'card-title' }, title) : null, children);
 }
 
@@ -160,4 +188,136 @@ export function field(label: string, control: HTMLElement, hint?: Child): HTMLEl
     control,
     hint ? h('span', { class: 'field-hint' }, hint) : null,
   );
+}
+
+/** Квадратный значок раздела на пастельном фоне. */
+export function badge(module: ModuleId | null, name: IconName, size = 18): HTMLElement {
+  return h('span', { class: `badge${module ? ` m-${module}` : ''}` }, icon(name, size));
+}
+
+/** Метка-плашка, как тег. */
+export function tag(text: string, module?: ModuleId): HTMLElement {
+  return h('span', { class: `tag${module ? ` m-${module}` : ''}` }, text);
+}
+
+/** Полоска прогресса. share - доля 0..1 (больше 1 показывается как переполнение). */
+export function meter(share: number, module?: ModuleId): HTMLElement {
+  const width = Math.max(0, Math.min(1, Number.isFinite(share) ? share : 0)) * 100;
+  return h(
+    'div',
+    {
+      class: `meter${module ? ` m-${module}` : ''}${share > 1 ? ' is-over' : ''}`,
+      role: 'progressbar',
+      'aria-valuenow': String(Math.round(share * 100)),
+      'aria-valuemin': '0',
+      'aria-valuemax': '100',
+    },
+    h('span', { style: `width:${width}%` }),
+  );
+}
+
+/** Ряд плиток «число + подпись». */
+export function tiles(items: { label: string; value: string }[]): HTMLElement {
+  return h(
+    'div',
+    { class: `tiles${items.length === 2 ? ' tiles-2' : ''}` },
+    items.map((item) =>
+      h('div', { class: 'tile' }, h('span', { class: 'tile-value' }, item.value), h('span', { class: 'tile-label' }, item.label)),
+    ),
+  );
+}
+
+/** Список «подпись - значение» (как свойства страницы): для длинных значений, которым тесно в плитках. */
+export function props(items: { label: string; value: Child; strong?: boolean }[]): HTMLElement {
+  return h(
+    'div',
+    { class: 'props' },
+    items.map((item) =>
+      h(
+        'div',
+        { class: 'prop' },
+        h('span', { class: 'prop-label' }, item.label),
+        h('span', { class: `prop-value${item.strong ? ' is-strong' : ''}` }, item.value),
+      ),
+    ),
+  );
+}
+
+/** Переключатель из нескольких вариантов. */
+export function seg<T extends string>(
+  options: { value: T; label: string }[],
+  value: T,
+  onChange: (value: T) => void,
+): HTMLElement {
+  const buttons = options.map((option) => {
+    const button = h('button', { type: 'button', class: option.value === value ? 'is-active' : '' }, option.label);
+    button.addEventListener('click', () => {
+      buttons.forEach((other) => other.classList.toggle('is-active', other === button));
+      onChange(option.value);
+    });
+    return button;
+  });
+  return h('div', { class: 'seg' }, buttons);
+}
+
+/** Листание периода: стрелка назад, подпись, стрелка вперёд (onNext = null - вперёд нельзя). */
+export function periodNav(label: string, onPrev: () => void, onNext: (() => void) | null): HTMLElement {
+  const prev = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Назад' }, icon('back'));
+  const next = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Вперёд', disabled: onNext === null }, icon('chevron'));
+  prev.addEventListener('click', onPrev);
+  if (onNext) next.addEventListener('click', onNext);
+  return h('div', { class: 'day-nav' }, prev, h('span', { class: 'grow' }, label), next);
+}
+
+/** Пустой экран раздела с подсказкой и кнопкой. */
+export function emptyState(module: ModuleId, name: IconName, title: string, text: string, action?: Child): HTMLElement {
+  return h('div', { class: 'empty' }, badge(module, name, 28), h('h2', null, title), h('p', null, text), action);
+}
+
+/** Подписи к диаграмме: цвет, название, значение. */
+export function legend(items: { color: string; label: string; value?: string }[]): HTMLElement {
+  return h(
+    'div',
+    { class: 'legend' },
+    items.map((item) =>
+      h(
+        'div',
+        { class: 'legend-row' },
+        h('span', { class: 'swatch', style: `background:${item.color}` }),
+        h('span', { class: 'grow' }, item.label),
+        item.value ? h('span', { class: 'row-side' }, item.value) : null,
+      ),
+    ),
+  );
+}
+
+/** Мини-столбики (без осей) для экрана «Сегодня». null - нет данных за день. */
+export function sparkBars(values: (number | null)[], module: ModuleId, max?: number): HTMLElement {
+  const top = max ?? Math.max(1, ...values.map((value) => value ?? 0));
+  return h(
+    'div',
+    { class: `spark m-${module}`, 'aria-hidden': 'true' },
+    values.map((value) =>
+      value === null || value <= 0
+        ? h('span', { class: 'is-empty', style: 'height:2px' })
+        : h('span', { style: `height:${Math.max(6, Math.min(100, (value / top) * 100))}%` }),
+    ),
+  );
+}
+
+/** Кнопки-метки с выбором одного варианта. */
+export function chipSelect<T extends string>(
+  options: { value: T; label: string }[],
+  value: T | null,
+  onChange: (value: T) => void,
+): HTMLElement {
+  const buttons = options.map((option) => {
+    const button = h('button', { type: 'button', class: `chip-btn${option.value === value ? ' is-active' : ''}` }, option.label);
+    button.addEventListener('click', () => {
+      buttons.forEach((other) => other.classList.toggle('is-active', other === button));
+      onChange(option.value);
+    });
+    return button;
+  });
+  return h('div', { class: 'chips' }, buttons);
 }

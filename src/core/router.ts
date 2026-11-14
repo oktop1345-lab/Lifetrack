@@ -1,6 +1,6 @@
 // Простой роутер по адресу после '#': #/today, #/habits ... Работает на GitHub Pages без настройки сервера.
 
-import type { IconName } from './ui';
+import type { IconName, ModuleId } from './ui';
 
 /** Функция очистки: вызывается при уходе с экрана (остановить таймеры, запросы). */
 export type Cleanup = () => void;
@@ -11,6 +11,10 @@ export interface RouteDef {
   icon: IconName;
   /** Показывать в нижней навигации. */
   tab: boolean;
+  /** Короткая подпись для нижней навигации (если заголовок длинный). */
+  tabLabel?: string;
+  /** Раздел - задаёт цвет значка в шапке. */
+  module?: ModuleId;
   render(root: HTMLElement): void | Cleanup | Promise<void | Cleanup>;
 }
 

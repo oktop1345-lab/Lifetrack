@@ -49,6 +49,36 @@ export function addMonths(month: string, n: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 }
 
+/** Сколько дней в месяце 'YYYY-MM'. */
+export function daysInMonth(month: string): number {
+  const [y, m] = month.split('-').map(Number);
+  return new Date(y ?? 1970, m ?? 1, 0).getDate();
+}
+
+/** Первый и последний день месяца 'YYYY-MM'. */
+export function monthBounds(month: string): { from: string; to: string } {
+  return { from: `${month}-01`, to: `${month}-${pad(daysInMonth(month))}` };
+}
+
+const monthFmt = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' });
+const monthShortFmt = new Intl.DateTimeFormat('ru-RU', { month: 'short' });
+
+/** '2026-11' -> 'Ноябрь 2026' */
+export function formatMonth(month: string): string {
+  const text = monthFmt.format(parseDate(`${month}-01`)).replace(/\s*г\.$/, '');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** '2026-11' -> 'ноя' */
+export function formatMonthShort(month: string): string {
+  return monthShortFmt.format(parseDate(`${month}-01`)).replace('.', '');
+}
+
+/** '9 ноя' - короткая подпись дня для осей диаграмм. */
+export function formatDayShort(s: string): string {
+  return `${parseDate(s).getDate()} ${formatMonthShort(monthKey(s))}`;
+}
+
 /** Все дни от from до to включительно. */
 export function dateRange(from: string, to: string): string[] {
   const out: string[] = [];

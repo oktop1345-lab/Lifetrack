@@ -14,12 +14,13 @@ if (!app) throw new Error('#app не найден');
 // ---------- Каркас ----------
 
 const title = h('h1', null, '');
+const titleIcon = h('span', { class: 'topbar-icon' });
 const headerButtons = new Map<string, HTMLElement>();
 const tabs = new Map<string, HTMLElement>();
 
 for (const route of ROUTES) {
   if (route.tab) {
-    tabs.set(route.id, h('a', { class: 'tab', href: `#/${route.id}` }, icon(route.icon), route.title));
+    tabs.set(route.id, h('a', { class: 'tab', href: `#/${route.id}` }, icon(route.icon, 22), route.tabLabel ?? route.title));
   } else {
     headerButtons.set(
       route.id,
@@ -32,7 +33,7 @@ const bannerSlot = h('div', null);
 const view = h('main', { class: 'view' });
 
 app.append(
-  h('header', { class: 'topbar' }, title, [...headerButtons.values()]),
+  h('header', { class: 'topbar' }, titleIcon, title, [...headerButtons.values()]),
   bannerSlot,
   view,
   h('nav', { class: 'tabbar', 'aria-label': 'Разделы' }, [...tabs.values()]),
@@ -40,6 +41,8 @@ app.append(
 
 function onRouteChange(route: RouteDef): void {
   title.textContent = route.title;
+  titleIcon.className = `topbar-icon${route.module ? ` m-${route.module}` : ''}`;
+  titleIcon.replaceChildren(icon(route.icon, 24));
   document.title = route.id === 'today' ? 'Трекер' : `${route.title} - Трекер`;
   for (const [id, node] of [...tabs, ...headerButtons]) {
     const active = id === route.id;

@@ -1,12 +1,12 @@
 import { formatDayLong, todayStr } from '../../core/dates';
 import { isStandalone } from '../../core/pwa';
-import { card, h, icon, type IconName } from '../../core/ui';
+import { badge, card, h, icon, type IconName, type ModuleId } from '../../core/ui';
 
-const SECTIONS: { id: string; title: string; text: string; icon: IconName; color: string }[] = [
-  { id: 'habits', title: 'Привычки', text: 'Чекины, серии, тепловая карта', icon: 'habits', color: 'var(--c-habits)' },
-  { id: 'workouts', title: 'Тренировки', text: 'Упражнения, подходы, прогресс', icon: 'workouts', color: 'var(--c-workouts)' },
-  { id: 'study', title: 'Учёба', text: 'Сессии, таймер, цели', icon: 'study', color: 'var(--c-study)' },
-  { id: 'finance', title: 'Финансы', text: 'Доходы, расходы, бюджет', icon: 'finance', color: 'var(--c-finance)' },
+const SECTIONS: { id: ModuleId; title: string; text: string; icon: IconName }[] = [
+  { id: 'habits', title: 'Привычки', text: 'Чекины, серии, тепловая карта', icon: 'habits' },
+  { id: 'workouts', title: 'Тренировки', text: 'Упражнения, подходы, прогресс', icon: 'workouts' },
+  { id: 'study', title: 'Учёба', text: 'Сессии, таймер, цели', icon: 'study' },
+  { id: 'finance', title: 'Финансы', text: 'Доходы, расходы, бюджет', icon: 'finance' },
 ];
 
 export function render(root: HTMLElement): void {
@@ -37,11 +37,11 @@ export function render(root: HTMLElement): void {
           h(
             'a',
             { class: 'list-row', href: `#/${section.id}` },
-            h('span', { class: 'badge', style: `background:${section.color}` }, icon(section.icon)),
+            badge(section.id, section.icon),
             h(
               'span',
               { class: 'grow' },
-              h('div', { style: 'font-weight:600' }, section.title),
+              h('div', { class: 'row-title' }, section.title),
               h('div', { class: 'muted small' }, section.text),
             ),
             h('span', { class: 'chev' }, icon('chevron', 20)),

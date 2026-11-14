@@ -1,17 +1,9 @@
-import { h, icon, type IconName } from '../core/ui';
+import { emptyState, type IconName, type ModuleId } from '../core/ui';
 
-/** Заглушка для разделов, которые появятся на следующих этапах. */
+/** Заглушка для разделов, которые ещё не сделаны. */
 export function renderPlaceholder(
   root: HTMLElement,
-  opts: { icon: IconName; color: string; title: string; text: string },
+  opts: { icon: IconName; module: ModuleId; title: string; text: string },
 ): void {
-  root.append(
-    h(
-      'div',
-      { class: 'empty' },
-      h('div', { class: 'badge', style: `background:${opts.color}` }, icon(opts.icon, 32)),
-      h('h2', null, opts.title),
-      h('p', null, opts.text),
-    ),
-  );
+  root.append(emptyState(opts.module, opts.icon, opts.title, opts.text));
 }

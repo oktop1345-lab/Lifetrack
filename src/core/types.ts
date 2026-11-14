@@ -74,6 +74,8 @@ export interface Category {
   id: string;
   name: string;
   kind: MoneyKind;
+  /** Номер цвета на диаграммах (0..7). Закреплён за категорией и не меняется. */
+  color: number;
 }
 
 export interface Transaction {

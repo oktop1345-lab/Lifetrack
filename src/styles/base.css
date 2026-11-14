@@ -1,78 +1,147 @@
-/* Тема: светлая и тёмная переключаются по системной настройке iPhone. */
+/* Оформление в духе Notion: белая страница, тонкие рамки, спокойные цвета, пастельные метки.
+   Светлая и тёмная тема переключаются по системной настройке iPhone. */
 :root {
   color-scheme: light dark;
 
-  --bg: #f2f2f7;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f0f0f4;
-  --text: #15151a;
-  --text-2: #6a6a76;
-  --text-3: #9b9ba6;
-  --line: rgba(60, 60, 67, 0.14);
+  --surface-2: #f6f5f2;
+  --surface-3: #eeede9;
+  --text: #2f2e2b;
+  --text-2: #73716c;
+  --text-3: #a3a19b;
+  --line: rgba(47, 46, 43, 0.11);
+  --line-2: rgba(47, 46, 43, 0.2);
 
-  --accent: #0b7a62;
-  --accent-soft: rgba(11, 122, 98, 0.12);
+  --accent: #2372d6; /* ссылки, выбранные элементы */
+  --accent-fill: #2476d9; /* заливка главной кнопки и галочек */
+  --accent-soft: rgba(35, 114, 214, 0.1);
   --on-accent: #ffffff;
-  --danger: #c5281c;
-  --danger-soft: rgba(197, 40, 28, 0.1);
-  --warn-bg: #fff3d1;
-  --warn-text: #6b4a00;
+  --danger: #cf3d3a;
+  --danger-soft: #fdecea;
+  --ok: #3f8160;
+  --warn-bg: #fbf3db;
 
-  /* Цвета разделов */
-  --c-habits: #17906c;
-  --c-workouts: #d9651a;
-  --c-study: #2f6fde;
-  --c-finance: #7a59d6;
+  /* Цвета разделов: основной тон и пастельный фон для значков и меток */
+  --c-habits: #3f8160;
+  --bg-habits: #e9f2ec;
+  --c-workouts: #cc6a16;
+  --bg-workouts: #faecdd;
+  --c-study: #2f78a8;
+  --bg-study: #e4f1f8;
+  --c-finance: #8a5fb0;
+  --bg-finance: #f3edf8;
+  --c-screen: #b8477f;
+  --bg-screen: #f9ecf2;
 
   /* Диаграммы: служебные линии и подписи */
-  --chart-muted: #7d7b76;
-  --chart-grid: #e6e5e0;
-  --chart-axis: #c3c2b7;
+  --chart-muted: #8a8882;
+  --chart-grid: #ecebe7;
+  --chart-axis: #cfcdc7;
 
-  /* Тепловая карта привычек: один оттенок, от светлого к тёмному */
-  --heat-habits-1: #bfe6d5;
-  --heat-habits-2: #7fcfae;
-  --heat-habits-3: #35a981;
-  --heat-habits-4: #0b7a62;
+  /* Набор из 8 цветов для категорий (порядок фиксирован, проверен на различимость) */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
+  --series-other: #b8b6b0;
 
-  --radius: 18px;
-  --radius-s: 12px;
-  --tap: 48px;
+  /* Тепловые карты: один оттенок, от светлого к насыщенному */
+  --heat-habits-1: #d7e8dc;
+  --heat-habits-2: #a5cdb3;
+  --heat-habits-3: #6aa986;
+  --heat-habits-4: #3f8160;
+  --heat-screen-1: #f3d9e5;
+  --heat-screen-2: #e3a8c4;
+  --heat-screen-3: #cf74a1;
+  --heat-screen-4: #b8477f;
+
+  --radius: 10px;
+  --radius-s: 8px;
+  --tap: 44px;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #000000;
-    --surface: #1c1c1e;
-    --surface-2: #2c2c2e;
-    --text: #f5f5f7;
-    --text-2: #a3a3ad;
-    --text-3: #70707a;
-    --line: rgba(255, 255, 255, 0.13);
+    --bg: #191919;
+    --surface: #202020;
+    --surface-2: #2a2a2a;
+    --surface-3: #343434;
+    --text: #e3e2de;
+    --text-2: #9c9a95;
+    --text-3: #6d6c68;
+    --line: rgba(255, 255, 255, 0.09);
+    --line-2: rgba(255, 255, 255, 0.18);
 
-    --accent: #3fd6a0;
-    --accent-soft: rgba(63, 214, 160, 0.16);
-    --on-accent: #03261a;
-    --danger: #ff6b5e;
-    --danger-soft: rgba(255, 107, 94, 0.16);
-    --warn-bg: #3a2f0b;
-    --warn-text: #ffd978;
+    --accent: #5aa2f0;
+    --accent-fill: #2b7ad8;
+    --accent-soft: rgba(90, 162, 240, 0.16);
+    --danger: #ee6b66;
+    --danger-soft: #3f2422;
+    --ok: #57a878;
+    --warn-bg: #3a3118;
+
+    --c-habits: #57a878;
+    --bg-habits: #223a2d;
+    --c-workouts: #d98a45;
+    --bg-workouts: #47301c;
+    --c-study: #5c9fd4;
+    --bg-study: #1b3447;
+    --c-finance: #a985d6;
+    --bg-finance: #34284a;
+    --c-screen: #d86fa3;
+    --bg-screen: #45263a;
 
     --chart-muted: #8f8d87;
-    --chart-grid: #2f2f31;
-    --chart-axis: #48484a;
+    --chart-grid: #2e2e2e;
+    --chart-axis: #474747;
 
-    --heat-habits-1: #17392d;
-    --heat-habits-2: #1e624a;
-    --heat-habits-3: #2a9a73;
-    --heat-habits-4: #3fd6a0;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --series-other: #5c5b57;
 
-    --c-habits: #3fd6a0;
-    --c-workouts: #ff9a4d;
-    --c-study: #6ea4ff;
-    --c-finance: #ad94ff;
+    --heat-habits-1: #22392c;
+    --heat-habits-2: #2f5a42;
+    --heat-habits-3: #41805c;
+    --heat-habits-4: #57a878;
+    --heat-screen-1: #3d2433;
+    --heat-screen-2: #6a3654;
+    --heat-screen-3: #a04f7c;
+    --heat-screen-4: #d86fa3;
   }
+}
+
+/* Цвет раздела для значков, меток и полосок внутри элемента */
+.m-habits {
+  --m: var(--c-habits);
+  --m-bg: var(--bg-habits);
+}
+.m-workouts {
+  --m: var(--c-workouts);
+  --m-bg: var(--bg-workouts);
+}
+.m-study {
+  --m: var(--c-study);
+  --m-bg: var(--bg-study);
+}
+.m-finance {
+  --m: var(--c-finance);
+  --m-bg: var(--bg-finance);
+}
+.m-screen {
+  --m: var(--c-screen);
+  --m-bg: var(--bg-screen);
 }
 
 *,
@@ -93,8 +162,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  font-size: 17px;
-  line-height: 1.4;
+  font-size: 16px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
@@ -125,6 +194,10 @@ a {
   color: var(--accent);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -144,16 +217,24 @@ a {
   flex: none;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 8px) 6px
-    calc(env(safe-area-inset-left) + 20px);
+  gap: 2px;
+  padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 8px) 4px
+    calc(env(safe-area-inset-left) + 16px);
+}
+
+.topbar-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  margin-right: 8px;
+  color: var(--m, var(--text-2));
 }
 
 .topbar h1 {
   flex: 1;
-  font-size: 28px;
-  font-weight: 750;
-  letter-spacing: -0.02em;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -166,18 +247,19 @@ a {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-s);
   background: none;
   color: var(--text-2);
 }
 
-.icon-btn:active {
+.icon-btn:active,
+.icon-btn.is-active {
   background: var(--surface-2);
+  color: var(--text);
 }
 
-.icon-btn.is-active {
-  color: var(--accent);
-  background: var(--accent-soft);
+.icon-btn:disabled {
+  opacity: 0.3;
 }
 
 .view {
@@ -186,40 +268,41 @@ a {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 8px calc(env(safe-area-inset-right) + 16px) 28px calc(env(safe-area-inset-left) + 16px);
+  padding: 8px calc(env(safe-area-inset-right) + 16px) 32px calc(env(safe-area-inset-left) + 16px);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .tabbar {
   flex: none;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  padding: 4px calc(env(safe-area-inset-right) + 4px) calc(env(safe-area-inset-bottom) + 2px)
-    calc(env(safe-area-inset-left) + 4px);
-  background: var(--surface);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 2px calc(env(safe-area-inset-right) + 2px) calc(env(safe-area-inset-bottom) + 2px)
+    calc(env(safe-area-inset-left) + 2px);
+  background: var(--bg);
   border-top: 1px solid var(--line);
 }
 
 .tab {
-  min-height: 52px;
+  min-height: 50px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  border: 0;
-  background: none;
   color: var(--text-3);
-  font-size: 10.5px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 500;
   text-decoration: none;
-  border-radius: 12px;
+  border-radius: var(--radius-s);
 }
 
 .tab.is-active {
-  color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
 }
 
 /* Когда открыта клавиатура, навигация прячется, чтобы не занимать место. */
@@ -233,8 +316,7 @@ a {
   padding: 12px 14px;
   border-radius: var(--radius-s);
   background: var(--warn-bg);
-  color: var(--warn-text);
-  font-size: 15px;
+  font-size: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -246,14 +328,7 @@ a {
 }
 
 .banner .btn {
-  min-height: 40px;
   flex: 1;
-  background: rgba(0, 0, 0, 0.08);
-  color: inherit;
-}
-
-@media (prefers-color-scheme: dark) {
-  .banner .btn {
-    background: rgba(255, 255, 255, 0.14);
-  }
+  min-height: 38px;
+  font-size: 14px;
 }

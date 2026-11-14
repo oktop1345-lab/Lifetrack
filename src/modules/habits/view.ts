@@ -1,12 +1,12 @@
 import type { Chart } from 'chart.js';
-import { barChart, chartBox, cssVar, dataTable } from '../../core/charts';
-import { addDays, formatDay, formatDayLong, todayStr } from '../../core/dates';
+import { barChart, chartBox, cssVar, dataTable, mountChart } from '../../core/charts';
+import { addDays, formatDay, formatDayLong, formatDayShort, todayStr } from '../../core/dates';
 import { db, newId } from '../../core/db';
 import { countDays, percent } from '../../core/format';
 import { heatmapStart, renderHeatmap } from '../../core/heatmap';
 import type { Cleanup } from '../../core/router';
 import type { Habit, HabitSchedule } from '../../core/types';
-import { card, confirmSheet, field, h, icon, openSheet, toast } from '../../core/ui';
+import { card, confirmSheet, emptyState, field, h, icon, openSheet, periodNav, tiles, toast } from '../../core/ui';
 import {
   bestStreak,
   currentStreak,
@@ -40,17 +40,16 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
     charts = [];
     root.replaceChildren();
 
-    const addBtn = h('button', { class: 'btn btn-primary', type: 'button' }, icon('plus', 20), 'Добавить привычку');
+    const addBtn = h('button', { class: 'btn btn-primary', type: 'button' }, icon('plus', 18), 'Добавить привычку');
     addBtn.addEventListener('click', () => openHabitForm(null, draw));
 
     if (habits.length === 0) {
       root.append(
-        h(
-          'div',
-          { class: 'empty' },
-          h('div', { class: 'badge', style: 'background:var(--c-habits)' }, icon('habits', 32)),
-          h('h2', null, 'Пока нет привычек'),
-          h('p', null, 'Добавь первую - например, «Зарядка» или «Читать 20 минут». Отмечай выполнение каждый день и следи за серией.'),
+        emptyState(
+          'habits',
+          'habits',
+          'Пока нет привычек',
+          'Добавь первую - например, «Зарядка» или «Читать 20 минут». Отмечай выполнение каждый день и следи за серией.',
           addBtn,
         ),
       );
@@ -62,7 +61,7 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
         day = next;
         void draw();
       }, draw),
-      tiles(habits, index, today),
+      habitTiles(habits, index, today),
       habitList(habits, index, today, draw),
       addBtn,
       h('h2', { class: 'section-title' }, 'Статистика'),
@@ -108,11 +107,6 @@ function dayCard(
   onDay: (day: string) => void,
   redraw: () => Promise<void>,
 ): HTMLElement {
-  const prev = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Предыдущий день' }, icon('back'));
-  const next = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Следующий день', disabled: day >= today }, icon('chevron'));
-  prev.addEventListener('click', () => onDay(addDays(day, -1)));
-  next.addEventListener('click', () => onDay(addDays(day, 1)));
-
   const scheduled = habits.filter((habit) => isScheduled(habit, day));
   const rows = scheduled.map((habit) => {
     const checked = index.get(habit.id)?.has(day) ?? false;
@@ -125,7 +119,7 @@ function dayCard(
         role: 'checkbox',
         'aria-checked': String(checked),
       },
-      h('span', { class: 'habit-check' }, checked ? icon('check', 22) : null),
+      h('span', { class: 'habit-check' }, checked ? icon('check', 16) : null),
       h(
         'span',
         { class: 'grow' },
@@ -141,7 +135,7 @@ function dayCard(
 
   return card(
     null,
-    h('div', { class: 'day-nav' }, prev, h('strong', { class: 'grow' }, dayLabel(day, today)), next),
+    periodNav(dayLabel(day, today), () => onDay(addDays(day, -1)), day >= today ? null : () => onDay(addDays(day, 1))),
     rows.length
       ? h('div', { class: 'list' }, rows)
       : h('p', { class: 'muted' }, 'На этот день ничего не запланировано.'),
@@ -155,19 +149,15 @@ async function toggleCheck(habitId: string, date: string, checked: boolean): Pro
 
 // ---------- Короткая сводка ----------
 
-function tiles(habits: Habit[], index: CheckIndex, today: string): HTMLElement {
+function habitTiles(habits: Habit[], index: CheckIndex, today: string): HTMLElement {
   const now = progress(habits, index, today, today);
   const week = progress(habits, index, addDays(today, -6), today);
   const month = progress(habits, index, addDays(today, -29), today);
-  const tile = (label: string, value: string): HTMLElement =>
-    h('div', { class: 'tile' }, h('span', { class: 'tile-value' }, value), h('span', { class: 'tile-label' }, label));
-  return h(
-    'div',
-    { class: 'tiles' },
-    tile('сегодня', `${now.done} из ${now.scheduled}`),
-    tile('за 7 дней', percent(week.done, week.scheduled)),
-    tile('за 30 дней', percent(month.done, month.scheduled)),
-  );
+  return tiles([
+    { label: 'сегодня', value: `${now.done} из ${now.scheduled}` },
+    { label: 'за 7 дней', value: percent(week.done, week.scheduled) },
+    { label: 'за 30 дней', value: percent(month.done, month.scheduled) },
+  ]);
 }
 
 // ---------- Список привычек ----------
@@ -181,7 +171,7 @@ function habitList(habits: Habit[], index: CheckIndex, today: string, redraw: ()
       h(
         'span',
         { class: 'grow' },
-        h('div', { class: 'habit-name' }, habit.name),
+        h('div', { class: 'row-title' }, habit.name),
         h(
           'div',
           { class: 'muted small' },
@@ -332,24 +322,19 @@ function weeksCard(habits: Habit[], index: CheckIndex, today: string, charts: Ch
     return week && week.scheduled > 0 ? Math.round((week.done / week.scheduled) * 100) : 0;
   };
   const { box, canvas } = chartBox(190, 'Доля выполненных привычек по неделям, в процентах');
-  // Диаграмму создаём после вставки на страницу, иначе у холста ещё нет размеров.
-  requestAnimationFrame(() => {
-    if (!canvas.isConnected) return;
-    charts.push(
-      barChart(canvas, {
-        labels: stats.map((week) => formatDay(week.weekStart).replace(/^(\d+) (\S{3}).*$/, '$1 $2')),
-        values: stats.map((_, i) => rate(i)),
-        color: cssVar('--c-habits'),
-        max: 100,
-        formatTick: (value) => `${value}%`,
-        tooltipTitle: (i) => `Неделя с ${formatDay(stats[i]?.weekStart ?? today)}`,
-        tooltipValue: (i) => {
-          const week = stats[i];
-          return week && week.scheduled > 0 ? `${rate(i)}% (${week.done} из ${week.scheduled})` : 'Ничего не запланировано';
-        },
-      }),
-    );
-  });
+  mountChart(canvas, charts, () =>
+    barChart(canvas, {
+      labels: stats.map((week) => formatDayShort(week.weekStart)),
+      series: [{ label: 'Выполнено', values: stats.map((_, i) => rate(i)), color: cssVar('--c-habits') }],
+      max: 100,
+      formatTick: (value) => `${value}%`,
+      tooltipTitle: (i) => `Неделя с ${formatDay(stats[i]?.weekStart ?? today)}`,
+      tooltipValue: (_, i) => {
+        const week = stats[i];
+        return week && week.scheduled > 0 ? `${rate(i)}% (${week.done} из ${week.scheduled})` : 'Ничего не запланировано';
+      },
+    }),
+  );
   return card(
     'По неделям',
     h('p', { class: 'muted small' }, `Доля выполненного за последние ${WEEKS_ON_CHART} недель. Нажми на столбец, чтобы увидеть числа.`),
