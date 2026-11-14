@@ -122,4 +122,6 @@ export interface Urge {
   note?: string;
   /** Что сделал вместо скролла. */
   insteadOf?: string;
+  /** Текст поддержки на английском, который показали в этот раз (от AI или встроенный). */
+  coach?: string;
 }

@@ -20,16 +20,23 @@ describe('buildContext', () => {
     expect(text).toContain('ЭКРАННОЕ ВРЕМЯ');
     expect(text).toContain('Среднее 3 ч 20 мин в день (записей: 3).');
     expect(text).toContain('Тянуло скроллить: 2 раз');
+    expect(text).toContain('По времени суток: ночь 0, утро 1, день 0, вечер 1.');
+  });
+
+  it('помнит причины «тянет скроллить»', () => {
+    const data = sampleData();
+    data.urges[0]!.note = 'не могу уснуть';
+    expect(buildContext(data, '2026-11-13', 30)).toContain('Последние причины: «не могу уснуть».');
   });
 
   it('отправляет сводку, а не сырые записи', () => {
     const data = sampleData();
     data.transactions[0]!.note = 'секретная покупка';
-    data.urges[0]!.note = 'личная заметка';
+    data.transactions[1]!.note = 'зарплата за проект';
     data.sessions[0]!.note = 'конспект';
     const result = buildContext(data, '2026-11-13', 30);
     expect(result).not.toContain('секретная покупка');
-    expect(result).not.toContain('личная заметка');
+    expect(result).not.toContain('зарплата за проект');
     expect(result).not.toContain('конспект');
     expect(result.length).toBeLessThan(2500);
   });

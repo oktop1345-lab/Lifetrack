@@ -75,7 +75,7 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
       ),
     ),
     contextText,
-    h('p', { class: 'tiny', style: 'padding:6px 0' }, 'Отдельные записи, заметки и API-ключ в сводку не входят.'),
+    h('p', { class: 'tiny', style: 'padding:6px 0' }, 'Отдельные записи, заметки и API-ключ в сводку не входят - кроме причин «тянет скроллить», чтобы AI их помнил.'),
   );
   root.append(contextBox, log, status, h('div', { class: 'composer' }, input, sendBtn));
   await refreshContext();

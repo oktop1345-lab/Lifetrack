@@ -1,5 +1,6 @@
 import { db } from './db';
 import type { AiSettings } from '../ai/types';
+import type { ThemeMode } from './theme';
 
 export interface AppSettings {
   /** Код валюты ISO 4217, например 'KZT'. */
@@ -9,6 +10,8 @@ export interface AppSettings {
   ai: AiSettings;
   /** Идущий таймер учёбы (считается от времени старта: iOS останавливает приложение в фоне). */
   studyTimer: StudyTimer | null;
+  /** Тема оформления: светлая (по умолчанию), тёмная или как в системе. */
+  theme: ThemeMode;
   /** Лимит экранного времени в сутки, минут. */
   screenLimitMinutes: number | null;
   firstRunAt: string | null;
@@ -54,6 +57,7 @@ function defaults(): AppSettings {
     monthlyBudget: null,
     ai: defaultAiSettings(),
     studyTimer: null,
+    theme: 'light',
     screenLimitMinutes: null,
     firstRunAt: null,
     lastBackupAt: null,

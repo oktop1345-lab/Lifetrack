@@ -5,15 +5,19 @@ import { clearData, exportData, importData } from '../../core/backup';
 import { formatDateTime } from '../../core/dates';
 import { checkForUpdate, isPersisted, requestPersistence } from '../../core/pwa';
 import { CURRENCIES, getSetting, setSetting } from '../../core/settings';
-import { append, card, confirmSheet, field, h, icon, openSheet, toast } from '../../core/ui';
+import { append, card, confirmSheet, field, h, icon, openSheet, seg, toast } from '../../core/ui';
+import type { ThemeMode } from '../../core/theme';
 
 export async function render(root: HTMLElement): Promise<void> {
-  const [ai, currency, lastBackupAt, persisted] = await Promise.all([
+  const [ai, currency, lastBackupAt, persisted, theme] = await Promise.all([
     getSetting('ai'),
     getSetting('currency'),
     getSetting('lastBackupAt'),
     isPersisted(),
+    getSetting('theme'),
   ]);
+  // После восстановления из копии тема могла поменяться - применяем её.
+  window.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
   const rerender = (): void => {
     root.replaceChildren();
     void render(root);
@@ -21,6 +25,7 @@ export async function render(root: HTMLElement): Promise<void> {
 
   root.append(
     aiCard(ai),
+    themeCard(theme),
     currencyCard(currency),
     dataCard(lastBackupAt, persisted, rerender),
     aboutCard(),
@@ -204,6 +209,27 @@ function openModelPicker(models: string[], current: string, onPick: (model: stri
   };
   search.addEventListener('input', draw);
   draw();
+}
+
+// ---------- Тема ----------
+
+function themeCard(theme: ThemeMode): HTMLElement {
+  return card(
+    'Оформление',
+    seg<ThemeMode>(
+      [
+        { value: 'light', label: 'Светлая' },
+        { value: 'dark', label: 'Тёмная' },
+        { value: 'auto', label: 'Как в iPhone' },
+      ],
+      theme,
+      (value) => {
+        void setSetting('theme', value).then(() => {
+          window.dispatchEvent(new CustomEvent('themechange', { detail: value }));
+        });
+      },
+    ),
+  );
 }
 
 // ---------- Валюта ----------

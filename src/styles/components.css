@@ -607,10 +607,8 @@ textarea.input {
     0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  .seg button.is-active {
-    background: var(--surface-3);
-  }
+.theme-dark .seg button.is-active {
+  background: var(--surface-3);
 }
 
 /* Листание периода: ‹ Ноябрь 2026 › */
@@ -1301,4 +1299,13 @@ textarea.input {
 
 .amount-plus {
   color: var(--ok);
+}
+
+/* Текст поддержки на английском в «Тянет скроллить» */
+.note.coach {
+  border-left: 3px solid var(--c-screen);
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }

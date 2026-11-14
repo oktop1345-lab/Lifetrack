@@ -13,6 +13,8 @@ import {
   screenLevel,
   urgeStats,
   weekSummary,
+  fallbackCoach,
+  urgeMemory,
 } from './logic';
 
 const day = (date: string, totalMinutes: number, apps: [string, number][] = []): ScreenDay => ({
@@ -197,5 +199,43 @@ describe('weekSummary', () => {
     const text = weekSummary([], [], null, '2026-11-13');
     expect(text).toContain('Лимит не задан.');
     expect(text).toContain('Записей экранного времени за неделю нет.');
+  });
+});
+
+describe('поддержка «тянет скроллить»', () => {
+  const now = new Date('2026-11-13T22:40:00');
+  const current: Urge = { id: 'now', at: '2026-11-13T22:40:00', trigger: 'bedtime', note: 'не могу уснуть' };
+  const past: Urge[] = [
+    current,
+    { id: '1', at: '2026-11-12T22:10:00', trigger: 'bedtime', note: 'скучно в кровати', insteadOf: 'Почитал' },
+    { id: '2', at: '2026-11-11T23:05:00', trigger: 'bedtime' },
+    { id: '3', at: '2026-11-10T14:00:00', trigger: 'boredom', note: 'на паре' },
+    { id: 'old', at: '2026-09-01T10:00:00', trigger: 'stress', note: 'очень старое' },
+  ];
+
+  it('память описывает текущий момент и прошлые записи с причинами', () => {
+    const text = urgeMemory(past, current, now);
+    expect(text).toContain('Right now: Fri 22:40 (evening), trigger: before bed, reason in their words: "не могу уснуть".');
+    expect(text).toContain('Last 30 days: 3 earlier urges, 1 of them replaced');
+    expect(text).toContain('Triggers: before bed 2, boredom 1.');
+    expect(text).toContain('Most often at: evening 2, afternoon 1.');
+    expect(text).toContain('- Thu 22:10, before bed, reason: "скучно в кровати", did instead: "Почитал"');
+  });
+
+  it('старые записи и сама текущая запись в историю не попадают', () => {
+    const text = urgeMemory(past, current, now);
+    expect(text).not.toContain('очень старое');
+    expect(text.match(/не могу уснуть/g)).toHaveLength(1);
+  });
+
+  it('без истории честно говорит, что её нет', () => {
+    expect(urgeMemory([current], current, now)).toContain('No earlier urges recorded');
+  });
+
+  it('встроенные тексты есть для каждого триггера и чередуются', () => {
+    for (const trigger of ['boredom', 'stress', 'tired', 'bedtime', 'other'] as const) {
+      expect(fallbackCoach(trigger, 0)).toMatch(/[a-z]/);
+      expect(fallbackCoach(trigger, 0)).not.toBe(fallbackCoach(trigger, 1));
+    }
   });
 });

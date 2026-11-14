@@ -29,7 +29,10 @@ import {
   TRIGGERS,
   triggerLabel,
   urgeStats,
+  urgeMemory,
   weekSummary,
+  COACH_SYSTEM,
+  fallbackCoach,
   type Comparison,
 } from './logic';
 
@@ -505,7 +508,7 @@ async function readScreenshot(file: File, onSaved: () => Promise<void>): Promise
 /** Запись тяги к скроллу и таймер на 10 минут с предложением заменить скролл привычкой. */
 export async function openUrgeSheet(onSaved: () => Promise<void> | void): Promise<void> {
   let trigger: UrgeTrigger = 'boredom';
-  const note = h('input', { class: 'input', type: 'text', placeholder: 'Что происходит? (необязательно)', maxLength: 140 });
+  const note = h('input', { class: 'input', type: 'text', placeholder: 'Почему тянет? Например, «не могу уснуть»', maxLength: 140 });
   const startTimer = h('button', { class: 'btn btn-primary', type: 'button' }, icon('clock', 18), 'Переждать 10 минут');
   const justSave = h('button', { class: 'btn', type: 'button' }, 'Просто записать');
   const body = h(
@@ -517,11 +520,17 @@ export async function openUrgeSheet(onSaved: () => Promise<void> | void): Promis
     note,
     startTimer,
     justSave,
-    h('p', { class: 'muted small' }, 'Тяга обычно проходит за несколько минут. Запись поможет увидеть, когда и почему она появляется.'),
+    h(
+      'p',
+      { class: 'muted small' },
+      'Приложение запомнит, когда и почему тянет. Пока идёт таймер, AI напишет пару слов поддержки на английском с учётом твоей причины и прошлых раз.',
+    ),
   );
   let tick: number | undefined;
+  const coachAbort = new AbortController();
   const sheet = openSheet('Тянет скроллить', body, () => {
     window.clearInterval(tick);
+    coachAbort.abort();
     void onSaved();
   });
 
@@ -547,6 +556,10 @@ export async function openUrgeSheet(onSaved: () => Promise<void> | void): Promis
       const done = new Set(checks.map((check) => check.habitId));
       const open = habits.filter((habit) => isScheduled(habit, today) && !done.has(habit.id));
 
+      const coachBox = h('div', { class: 'note coach', lang: 'en' }, h('div', { class: 'typing' }, h('span'), h('span'), h('span')));
+      const coachNote = h('p', { class: 'muted tiny slot' });
+      void writeCoach(urge, open.map((habit) => habit.name), coachBox, coachNote, coachAbort.signal);
+
       const display = h('div', { class: 'timer' }, clock(URGE_TIMER_SECONDS));
       const caption = h('p', { class: 'muted', style: 'text-align:center' }, 'Подожди 10 минут. Если после этого всё ещё хочется - решай сам.');
       const instead = h('input', { class: 'input', type: 'text', placeholder: 'Что сделал вместо скролла', maxLength: 140 });
@@ -569,6 +582,8 @@ export async function openUrgeSheet(onSaved: () => Promise<void> | void): Promis
       body.replaceChildren(
         display,
         caption,
+        coachBox,
+        coachNote,
         open.length
           ? h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Сделай вместо этого привычку - нажми, когда выполнишь'), habitBox)
           : h('p', { class: 'muted small' }, 'Идеи на 10 минут: пройтись, выпить воды, сделать разминку, написать другу.'),
@@ -588,7 +603,7 @@ export async function openUrgeSheet(onSaved: () => Promise<void> | void): Promis
 
       finish.addEventListener('click', () => {
         const text = instead.value.trim();
-        void (text ? db.urges.put({ ...urge, insteadOf: text }) : Promise.resolve()).then(() => {
+        void (text ? db.urges.update(urge.id, { insteadOf: text }) : Promise.resolve()).then(() => {
           toast(text ? 'Отлично, записано' : 'Записано');
           sheet.close();
         });
@@ -597,9 +612,69 @@ export async function openUrgeSheet(onSaved: () => Promise<void> | void): Promis
   });
 }
 
+/**
+ * Пишет текст поддержки на английском: от AI (с учётом причины и истории) или встроенный, если AI недоступен.
+ * Готовый текст сохраняется в запись, чтобы его можно было перечитать.
+ */
+async function writeCoach(urge: Urge, openHabits: string[], box: HTMLElement, note: HTMLElement, signal: AbortSignal): Promise<void> {
+  const useFallback = (reason: string): void => {
+    const text = fallbackCoach(urge.trigger, Date.now() / 60_000);
+    box.replaceChildren(text);
+    note.textContent = reason;
+    void db.urges.update(urge.id, { coach: text });
+  };
+
+  if (navigator.onLine === false) {
+    useFallback('Нет интернета - показан встроенный текст. С интернетом AI учтёт твою историю.');
+    return;
+  }
+  const ai = await getSetting('ai');
+  const { def, cfg } = activeProvider(ai);
+  if (configProblem(def, cfg)) {
+    useFallback('Встроенный текст. Подключи AI в настройках - тогда тексты будут учитывать твою причину и прошлые разы.');
+    return;
+  }
+
+  const history = await db.urges.toArray();
+  let text = '';
+  try {
+    await streamChat(ai, {
+      system: COACH_SYSTEM,
+      messages: [
+        {
+          role: 'user',
+          content:
+            urgeMemory(history, urge, new Date()) +
+            '\n' +
+            (openHabits.length ? `Open habits for today: ${openHabits.join(', ')}.` : 'No open habits for today.') +
+            '\nWrite the message now.',
+        },
+      ],
+      signal,
+      onDelta(delta) {
+        text += delta;
+        box.replaceChildren(text);
+      },
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      if (text.trim()) void db.urges.update(urge.id, { coach: text.trim() });
+      return;
+    }
+    useFallback(`AI сейчас недоступен (${describeError(err).message}) - показан встроенный текст.`);
+    return;
+  }
+  if (!text.trim()) {
+    useFallback('AI ответил пустым текстом - показан встроенный.');
+    return;
+  }
+  note.textContent = 'Текст от AI с учётом твоей причины и прошлых раз.';
+  await db.urges.update(urge.id, { coach: text.trim() });
+}
+
 function openUrgeEdit(urge: Urge, onSaved: () => Promise<void>): void {
   let trigger = urge.trigger;
-  const note = h('input', { class: 'input', type: 'text', value: urge.note ?? '', placeholder: 'Что происходило', maxLength: 140 });
+  const note = h('input', { class: 'input', type: 'text', value: urge.note ?? '', placeholder: 'Почему тянуло', maxLength: 140 });
   const instead = h('input', { class: 'input', type: 'text', value: urge.insteadOf ?? '', placeholder: 'Что сделал вместо скролла', maxLength: 140 });
   const save = h('button', { class: 'btn btn-primary', type: 'button' }, 'Сохранить');
   const remove = h('button', { class: 'btn btn-danger', type: 'button' }, 'Удалить запись');
@@ -607,8 +682,9 @@ function openUrgeEdit(urge: Urge, onSaved: () => Promise<void>): void {
     chipSelect(TRIGGERS, trigger, (value) => {
       trigger = value;
     }),
-    field('Заметка', note),
+    field('Почему тянуло', note),
     field('Вместо скролла', instead),
+    urge.coach ? h('div', { class: 'note coach', lang: 'en' }, urge.coach) : null,
     save,
     remove,
   ]);
@@ -619,6 +695,7 @@ function openUrgeEdit(urge: Urge, onSaved: () => Promise<void>): void {
       trigger,
       ...(note.value.trim() ? { note: note.value.trim() } : {}),
       ...(instead.value.trim() ? { insteadOf: instead.value.trim() } : {}),
+      ...(urge.coach ? { coach: urge.coach } : {}),
     };
     void db.urges.put(record).then(() => {
       sheet.close();
@@ -659,9 +736,8 @@ function urgesCard(urges: Urge[], today: string, redraw: () => Promise<void>): H
         'span',
         { class: 'grow' },
         h('div', { class: 'row' }, h('span', { class: 'row-title' }, formatDateTime(urge.at)), tag(triggerLabel(urge.trigger), 'screen')),
-        urge.insteadOf || urge.note
-          ? h('div', { class: 'muted small' }, urge.insteadOf ? `Вместо этого: ${urge.insteadOf}` : (urge.note ?? ''))
-          : null,
+        urge.note ? h('div', { class: 'muted small' }, `Почему: ${urge.note}`) : null,
+        urge.insteadOf ? h('div', { class: 'muted small' }, `Вместо этого: ${urge.insteadOf}`) : null,
       ),
       h('span', { class: 'chev' }, icon('chevron', 18)),
     );

@@ -1,7 +1,7 @@
 /* Оформление в духе Notion: белая страница, тонкие рамки, спокойные цвета, пастельные метки.
-   Светлая и тёмная тема переключаются по системной настройке iPhone. */
+   По умолчанию светлая тема; тёмную можно включить в настройках. */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   --bg: #ffffff;
   --surface: #ffffff;
@@ -66,60 +66,60 @@
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #191919;
-    --surface: #202020;
-    --surface-2: #2a2a2a;
-    --surface-3: #343434;
-    --text: #e3e2de;
-    --text-2: #9c9a95;
-    --text-3: #6d6c68;
-    --line: rgba(255, 255, 255, 0.09);
-    --line-2: rgba(255, 255, 255, 0.18);
+/* Тёмная тема: включается классом theme-dark на <html> (см. core/theme.ts). */
+:root.theme-dark {
+  color-scheme: dark;
+  --bg: #191919;
+  --surface: #202020;
+  --surface-2: #2a2a2a;
+  --surface-3: #343434;
+  --text: #e3e2de;
+  --text-2: #9c9a95;
+  --text-3: #6d6c68;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-2: rgba(255, 255, 255, 0.18);
 
-    --accent: #5aa2f0;
-    --accent-fill: #2b7ad8;
-    --accent-soft: rgba(90, 162, 240, 0.16);
-    --danger: #ee6b66;
-    --danger-soft: #3f2422;
-    --ok: #57a878;
-    --warn-bg: #3a3118;
+  --accent: #5aa2f0;
+  --accent-fill: #2b7ad8;
+  --accent-soft: rgba(90, 162, 240, 0.16);
+  --danger: #ee6b66;
+  --danger-soft: #3f2422;
+  --ok: #57a878;
+  --warn-bg: #3a3118;
 
-    --c-habits: #57a878;
-    --bg-habits: #223a2d;
-    --c-workouts: #d98a45;
-    --bg-workouts: #47301c;
-    --c-study: #5c9fd4;
-    --bg-study: #1b3447;
-    --c-finance: #a985d6;
-    --bg-finance: #34284a;
-    --c-screen: #d86fa3;
-    --bg-screen: #45263a;
+  --c-habits: #57a878;
+  --bg-habits: #223a2d;
+  --c-workouts: #d98a45;
+  --bg-workouts: #47301c;
+  --c-study: #5c9fd4;
+  --bg-study: #1b3447;
+  --c-finance: #a985d6;
+  --bg-finance: #34284a;
+  --c-screen: #d86fa3;
+  --bg-screen: #45263a;
 
-    --chart-muted: #8f8d87;
-    --chart-grid: #2e2e2e;
-    --chart-axis: #474747;
+  --chart-muted: #8f8d87;
+  --chart-grid: #2e2e2e;
+  --chart-axis: #474747;
 
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-4: #c98500;
-    --series-5: #d55181;
-    --series-6: #008300;
-    --series-7: #9085e9;
-    --series-8: #e66767;
-    --series-other: #5c5b57;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --series-other: #5c5b57;
 
-    --heat-habits-1: #22392c;
-    --heat-habits-2: #2f5a42;
-    --heat-habits-3: #41805c;
-    --heat-habits-4: #57a878;
-    --heat-screen-1: #3d2433;
-    --heat-screen-2: #6a3654;
-    --heat-screen-3: #a04f7c;
-    --heat-screen-4: #d86fa3;
-  }
+  --heat-habits-1: #22392c;
+  --heat-habits-2: #2f5a42;
+  --heat-habits-3: #41805c;
+  --heat-habits-4: #57a878;
+  --heat-screen-1: #3d2433;
+  --heat-screen-2: #6a3654;
+  --heat-screen-3: #a04f7c;
+  --heat-screen-4: #d86fa3;
 }
 
 /* Цвет раздела для значков, меток и полосок внутри элемента */

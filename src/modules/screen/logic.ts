@@ -257,3 +257,106 @@ export function weekSummary(days: ScreenDay[], urges: Urge[], limit: number | nu
   }
   return lines.join('\n');
 }
+
+// ---------- Поддержка «тянет скроллить» (тексты на английском) ----------
+
+const TRIGGER_EN: Record<UrgeTrigger, string> = {
+  boredom: 'boredom',
+  stress: 'stress',
+  tired: 'tiredness',
+  bedtime: 'before bed',
+  other: 'other',
+};
+
+const PART_EN = ['night', 'morning', 'afternoon', 'evening'];
+const WEEKDAY_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+/** Встроенные тексты на случай, когда AI недоступен (нет интернета или ключа). */
+export const FALLBACK_COACH: Record<UrgeTrigger, string[]> = {
+  boredom: [
+    'Boredom is not an emergency. It is space - and space is where good ideas grow. The feed will not give you anything you will remember tomorrow. Give the next ten minutes to something your future self will thank you for.',
+    'Discipline is choosing what you want most over what you want now. Right now you want a quick hit of novelty. What you want most is a day you are proud of. Stand up, move, and start one small useful thing.',
+  ],
+  stress: [
+    'Scrolling feels like relief, but it only postpones the stress and adds noise on top. Take five slow breaths. Then write down the one thing that is worrying you and the next tiny step. Calm comes from action, not from the feed.',
+    'Your mind is asking for a break, not for more input. Give it a real one: walk, stretch, drink some water. Strong people are not the ones who never feel pressure - they are the ones who respond to it on purpose.',
+  ],
+  tired: [
+    'When you are tired, the feed is the most expensive way to rest: it drains attention and gives nothing back. Close your eyes for five minutes, get some fresh air, or simply go to bed earlier. Rest is a discipline too.',
+    'Fatigue makes every scroll feel harmless. It is not. Protect the little energy you have left: put the phone down, stretch your back, and do one calm thing that actually restores you.',
+  ],
+  bedtime: [
+    'The best thing you can do for tomorrow happens tonight. Every minute of scrolling now is borrowed from your sleep, your mood and your focus tomorrow. Put the phone away from the bed and read a few pages instead.',
+    'Bedtime scrolling is a loop with no ending - there is always one more video. Decide that the day is done. A calm mind and a good night of sleep are worth more than anything on that screen.',
+  ],
+  other: [
+    'You noticed the urge instead of obeying it - that is already discipline. Now make the next ten minutes count: do something small that moves your life forward. The feed will still be there; this moment will not.',
+    'Attention is the most valuable thing you own. Spend it like money. Ask yourself: will scrolling right now make my day better? If not, choose one habit, one task or one walk instead.',
+  ],
+};
+
+/** Встроенный текст для этого триггера. n - любое число, чтобы тексты чередовались. */
+export function fallbackCoach(trigger: UrgeTrigger, n: number): string {
+  const list = FALLBACK_COACH[trigger];
+  return list[Math.abs(Math.floor(n)) % list.length] ?? FALLBACK_COACH.other[0] ?? '';
+}
+
+const localDate = (at: Date): string =>
+  `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, '0')}-${String(at.getDate()).padStart(2, '0')}`;
+
+const hhmm = (at: Date): string => `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
+
+/**
+ * «Память» о тяге к скроллу для AI: когда и почему это случалось раньше.
+ * current - текущая запись (в историю не попадает), now - текущий момент.
+ * Берутся последние 30 дней: итоги и до 8 последних записей с причинами.
+ */
+export function urgeMemory(urges: Urge[], current: Urge, now: Date): string {
+  const since = now.getTime() - 30 * 86_400_000;
+  const past = urges
+    .filter((urge) => urge.id !== current.id && new Date(urge.at).getTime() >= since)
+    .sort((a, b) => b.at.localeCompare(a.at));
+  const at = new Date(current.at);
+  const lines: string[] = [
+    `Right now: ${WEEKDAY_EN[isoWeekday(localDate(at)) - 1]} ${hhmm(at)} (${PART_EN[dayPart(at.getHours())]}), trigger: ${TRIGGER_EN[current.trigger]}` +
+      (current.note ? `, reason in their words: "${current.note.slice(0, 140)}"` : '') +
+      '.',
+  ];
+  if (past.length === 0) {
+    lines.push('No earlier urges recorded in the last 30 days.');
+    return lines.join('\n');
+  }
+  const stats = urgeStats(past);
+  const top = (values: number[], names: string[]): string =>
+    values
+      .map((count, i) => ({ count, name: names[i] ?? '' }))
+      .filter((item) => item.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3)
+      .map((item) => `${item.name} ${item.count}`)
+      .join(', ');
+  lines.push(
+    `Last 30 days: ${stats.total} earlier urges, ${stats.replaced} of them replaced with something else.`,
+    'Triggers: ' + stats.byTrigger.map((item) => `${TRIGGER_EN[item.trigger]} ${item.count}`).join(', ') + '.',
+    `Most often at: ${top(stats.byPart, PART_EN)}. Most often on: ${top(stats.byWeekday, WEEKDAY_EN)}.`,
+    'Recent entries (newest first):',
+  );
+  for (const urge of past.slice(0, 8)) {
+    const when = new Date(urge.at);
+    lines.push(
+      `- ${WEEKDAY_EN[isoWeekday(localDate(when)) - 1]} ${hhmm(when)}, ${TRIGGER_EN[urge.trigger]}` +
+        (urge.note ? `, reason: "${urge.note.slice(0, 100)}"` : '') +
+        (urge.insteadOf ? `, did instead: "${urge.insteadOf.slice(0, 60)}"` : ''),
+    );
+  }
+  return lines.join('\n');
+}
+
+/** Системная инструкция для коротких текстов поддержки. */
+export const COACH_SYSTEM = [
+  'You are a calm, direct coach inside a personal habit tracker. The user just felt the urge to scroll social media feeds and pressed a button instead.',
+  'Write in English only, even if their notes are in Russian. 4-6 short sentences, plain text, no headings, no lists, no emojis, no quotes from famous people.',
+  'Acknowledge their current reason and, if the history shows a pattern (same time of day, same trigger, same day), name it briefly so they feel remembered.',
+  'Talk about discipline, attention and self-respect without shaming. End with one concrete, better thing to do in the next 10 minutes - prefer one of their open habits if any are listed.',
+  'Never promise to block apps.',
+].join('\n');

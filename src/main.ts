@@ -3,6 +3,7 @@ import './styles/components.css';
 
 import { backupState, exportData, hasUserData, isBackupDue } from './core/backup';
 import { initPwa, requestPersistence } from './core/pwa';
+import { applyTheme, storedTheme, watchSystemTheme, type ThemeMode } from './core/theme';
 import { navigate, startRouter, type RouteDef } from './core/router';
 import { getSetting, setSetting } from './core/settings';
 import { h, icon, toast } from './core/ui';
@@ -103,6 +104,9 @@ syncViewport();
 
 // ---------- Запуск ----------
 
+// Тема применяется сразу, ещё до чтения базы, чтобы экран не мигал.
+applyTheme(storedTheme());
+
 async function boot(): Promise<void> {
   initPwa();
   void requestPersistence();
@@ -110,10 +114,18 @@ async function boot(): Promise<void> {
   if (!location.hash) navigate('today');
   const router = startRouter(ROUTES, view, onRouteChange);
 
-  // При смене светлой/тёмной темы перерисовываем экран, чтобы диаграммы взяли новые цвета.
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  // Тема из настроек (могла прийти из бэкапа). Если тема на экране сменилась - перерисовываем,
+  // чтобы диаграммы взяли новые цвета.
+  const redraw = (): void => {
     const busy = document.querySelector('.sheet-backdrop') !== null || router.current().id === 'assistant';
     if (!busy) router.refresh();
+  };
+  let theme = await getSetting('theme');
+  if (applyTheme(theme)) redraw();
+  watchSystemTheme(() => theme, redraw);
+  window.addEventListener('themechange', (event) => {
+    theme = (event as CustomEvent<ThemeMode>).detail;
+    if (applyTheme(theme)) redraw();
   });
 }
 

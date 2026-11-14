@@ -1,12 +1,13 @@
 // Сводка данных для AI. Модель получает только итоги за период: проценты, суммы, средние.
-// Сами записи (отдельные траты, заметки, занятия) не отправляются.
+// Сами записи (отдельные траты, заметки, занятия) не отправляются. Исключение - причины
+// «тянет скроллить» (до 5 последних): владелец попросил, чтобы AI их учитывал.
 
 import { addDays, formatDayLong, monthBounds, monthKey } from '../core/dates';
 import { formatDuration, formatNumber } from '../core/format';
 import { formatMoney } from '../core/money';
 import { categoryTotals, goalStatus, sumBetween } from '../modules/finance/logic';
 import { bestStreak, currentStreak, indexChecks, isScheduled, progress, scheduleText } from '../modules/habits/logic';
-import { appTotals, averageMinutes, limitStreak, urgeStats } from '../modules/screen/logic';
+import { appTotals, averageMinutes, DAY_PARTS, limitStreak, urgeStats } from '../modules/screen/logic';
 import { goalProgress, minutesBySubject, totalMinutes } from '../modules/study/logic';
 import type { AllData } from '../modules/today/data';
 import { countBetween, exerciseNames, exerciseProgress, typeDistribution, weeklyVolume } from '../modules/workouts/logic';
@@ -128,8 +129,17 @@ export function buildContext(data: AllData, today: string, days: number): string
       `Тянуло скроллить: ${urges.total} раз, удалось заменить другим делом: ${urges.replaced}. ` +
         'Триггеры: ' +
         urges.byTrigger.map((item) => `${item.label.toLowerCase()} ${item.count}`).join(', ') +
+        '. По времени суток: ' +
+        DAY_PARTS.map((name, i) => `${name.toLowerCase()} ${urges.byPart[i] ?? 0}`).join(', ') +
         '.',
     );
+    // Причины своими словами: пользователь сам просил, чтобы AI их помнил.
+    const reasons = data.urges
+      .filter((urge) => urge.note && new Date(urge.at).getTime() >= start)
+      .sort((a, b) => b.at.localeCompare(a.at))
+      .slice(0, 5)
+      .map((urge) => `«${(urge.note ?? '').slice(0, 80)}»`);
+    if (reasons.length) lines.push(`Последние причины: ${reasons.join(', ')}.`);
   }
 
   return lines.join('\n');
