@@ -1,28 +1,39 @@
+import { buildContext } from '../../ai/context';
 import { describeError } from '../../ai/errors';
 import { activeProvider, configProblem, streamChat } from '../../ai/providers';
 import type { ChatMessage } from '../../ai/types';
-import { formatDayLong, todayStr } from '../../core/dates';
+import { todayStr } from '../../core/dates';
 import { renderMarkdown } from '../../core/markdown';
 import type { Cleanup } from '../../core/router';
 import { getSetting } from '../../core/settings';
-import { h, icon } from '../../core/ui';
+import { h, icon, seg } from '../../core/ui';
+import { loadAll } from '../today/data';
 
 // История чата живёт в памяти, пока приложение открыто (в базу не пишется).
 const history: ChatMessage[] = [];
 
 const SUGGESTIONS = [
-  'Составь план тренировок на неделю для новичка',
-  'Как закрепить новую привычку?',
-  'С чего начать вести личный бюджет?',
+  'Проанализируй мои траты за месяц',
+  'Составь план тренировок на неделю',
+  'Как у меня с привычками и что улучшить?',
+  'Где я теряю время в телефоне?',
 ];
 
-function systemPrompt(): string {
+type ContextDays = '7' | '30' | '90';
+
+// За какой период AI видит сводку. Запоминается, пока приложение открыто.
+let contextDays: ContextDays = '30';
+
+function systemPrompt(context: string): string {
   return [
-    'Ты - ассистент внутри личного приложения «Трекер»: привычки, тренировки, учёба и финансы одного человека.',
+    'Ты - ассистент внутри личного приложения «Трекер»: привычки, тренировки, учёба, финансы и экранное время одного человека.',
     'Отвечай на русском языке, по делу и коротко: ответ читают на экране телефона.',
     'Используй короткие абзацы и простые списки. Не используй таблицы.',
-    `Сегодня ${formatDayLong(todayStr())}.`,
-    'Данных пользователя из приложения у тебя пока нет. Если для ответа нужны его цифры, попроси написать их в чат.',
+    'Ниже - сводка данных пользователя из приложения. Опирайся на эти числа и называй их в ответе.',
+    'У тебя есть только итоги за период, без отдельных записей. Если для ответа чего-то не хватает, скажи об этом прямо и не выдумывай данные.',
+    'Ты не можешь менять данные в приложении и не можешь блокировать другие приложения.',
+    '',
+    context,
   ].join('\n');
 }
 
@@ -33,7 +44,41 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
   const status = h('div', { class: 'chat-status slot' });
   const input = h('textarea', { rows: 1, placeholder: 'Сообщение', 'aria-label': 'Сообщение' });
   const sendBtn = h('button', { class: 'send-btn', type: 'button', 'aria-label': 'Отправить' }, icon('send'));
-  root.append(log, status, h('div', { class: 'composer' }, input, sendBtn));
+
+  // Показываем, что именно получит AI: только сводку за выбранный период.
+  const contextText = h('pre', null, '');
+  const contextTitle = h('summary', null, '');
+  const refreshContext = async (): Promise<string> => {
+    const text = buildContext(await loadAll(), todayStr(), Number(contextDays));
+    contextText.textContent = text;
+    contextTitle.textContent = `Что видит AI: сводка за ${contextDays} дней`;
+    return text;
+  };
+  const contextBox = h(
+    'details',
+    { class: 'chat-context', style: 'flex:none;padding:0 16px' },
+    contextTitle,
+    h(
+      'div',
+      { style: 'padding:6px 0' },
+      seg<ContextDays>(
+        [
+          { value: '7', label: '7 дней' },
+          { value: '30', label: '30 дней' },
+          { value: '90', label: '90 дней' },
+        ],
+        contextDays,
+        (value) => {
+          contextDays = value;
+          void refreshContext();
+        },
+      ),
+    ),
+    contextText,
+    h('p', { class: 'tiny', style: 'padding:6px 0' }, 'Отдельные записи, заметки и API-ключ в сводку не входят.'),
+  );
+  root.append(contextBox, log, status, h('div', { class: 'composer' }, input, sendBtn));
+  await refreshContext();
 
   let controller: AbortController | null = null;
 
@@ -60,7 +105,7 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
         'div',
         { class: 'chat-intro' },
         h('h2', null, 'Спроси что-нибудь'),
-        h('p', { class: 'muted' }, 'Позже ассистент научится видеть сводку твоих данных. Пока можно спросить совет:'),
+        h('p', { class: 'muted' }, 'Ассистент видит сводку твоих данных из приложения и отвечает с опорой на неё. Например:'),
         chips,
       ),
     );
@@ -135,6 +180,7 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
     if (!(await checkReady())) return;
 
     const ai = await getSetting('ai');
+    const context = await refreshContext();
     const epoch = chatEpoch;
     if (history.length === 0) log.replaceChildren(resetButton());
     history.push({ role: 'user', content: text });
@@ -161,7 +207,7 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
     setBusy(true);
     try {
       const result = await streamChat(ai, {
-        system: systemPrompt(),
+        system: systemPrompt(context),
         messages: history.slice(),
         signal: controller.signal,
         onDelta(delta) {

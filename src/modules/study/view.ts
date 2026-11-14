@@ -145,6 +145,8 @@ function subjectSelect(subjects: StudySubject[], selected: string | undefined, o
   const select = h('select', { class: 'select' });
   const fill = (value?: string): void => {
     select.replaceChildren(
+      // Без этой строки при пустом списке «Новый предмет» был бы уже выбран и не срабатывал бы.
+      ...(subjects.length === 0 ? [h('option', { value: '' }, 'Выбери предмет')] : []),
       ...subjects.map((subject) => h('option', { value: subject.id, selected: subject.id === value }, subject.name)),
       h('option', { value: NEW_SUBJECT }, '+ Новый предмет...'),
     );

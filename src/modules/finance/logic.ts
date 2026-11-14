@@ -185,4 +185,22 @@ export function sumBetween(transactions: Transaction[], kind: MoneyKind, from: s
   return total;
 }
 
+/** Суммы по категориям за произвольный период, по убыванию (для сводки AI). */
+export function categoryTotals(
+  transactions: Transaction[],
+  categories: Category[],
+  kind: MoneyKind,
+  from: string,
+  to: string,
+): { name: string; amount: number }[] {
+  const names = new Map(categories.map((category) => [category.id, category.name]));
+  const sums = new Map<string, number>();
+  for (const tx of transactions) {
+    if (tx.kind !== kind || tx.date < from || tx.date > to) continue;
+    const name = names.get(tx.categoryId) ?? 'Без категории';
+    sums.set(name, (sums.get(name) ?? 0) + tx.amount);
+  }
+  return [...sums.entries()].map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount);
+}
+
 export { daysInMonth };

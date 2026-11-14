@@ -284,6 +284,7 @@ export async function openTransactionForm(
   const fillCategories = (selected?: string): void => {
     const options = categories.filter((category) => category.kind === kind);
     categorySelect.replaceChildren(
+      ...(options.length === 0 ? [h('option', { value: '' }, 'Выбери категорию')] : []),
       ...options.map((category) => h('option', { value: category.id, selected: category.id === selected }, category.name)),
       h('option', { value: NEW_CATEGORY }, '+ Новая категория...'),
     );
@@ -331,7 +332,7 @@ export async function openTransactionForm(
       toast('Введи сумму больше нуля', 'error');
       return;
     }
-    if (!date.value || categorySelect.value === NEW_CATEGORY) {
+    if (!date.value || !categorySelect.value || categorySelect.value === NEW_CATEGORY) {
       toast('Выбери дату и категорию', 'error');
       return;
     }
