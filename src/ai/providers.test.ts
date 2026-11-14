@@ -17,7 +17,8 @@ describe('Anthropic', () => {
     expect(req.url).toBe('https://api.anthropic.com/v1/messages');
     expect(req.headers['anthropic-dangerous-direct-browser-access']).toBe('true');
     expect(req.headers['x-api-key']).toBe('sk-ant-1');
-    expect(req.body).toMatchObject({ model: 'claude-opus-5-5', stream: true, system: 'система', messages });
+    expect(req.body).toMatchObject({ model: 'claude-opus-5-5', stream: true, system: 'система' });
+    expect(req.body?.messages).toEqual(messages);
   });
 
   it('включает запасную модель только там, где она поддерживается', () => {
@@ -139,6 +140,39 @@ describe('Gemini', () => {
       ],
     });
     expect(models).toEqual(['gemini-x']);
+  });
+});
+
+describe('картинки в сообщении', () => {
+  const withImage: ChatMessage[] = [{ role: 'user', content: 'что на картинке?', images: [{ mime: 'image/jpeg', data: 'QUJD' }] }];
+
+  it('Anthropic: блок image с base64 перед текстом', () => {
+    const req = PROVIDERS.anthropic.chatRequest({ apiKey: 'k', model: 'claude-opus-5-5' }, 's', withImage);
+    const sent = (req.body?.messages as { content: unknown }[])[0]?.content;
+    expect(sent).toEqual([
+      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'QUJD' } },
+      { type: 'text', text: 'что на картинке?' },
+    ]);
+  });
+
+  it('OpenAI-совместимые: image_url с data-адресом', () => {
+    const req = PROVIDERS.openrouter.chatRequest({ apiKey: 'k', model: 'm' }, 's', withImage);
+    const sent = (req.body?.messages as { content: unknown }[])[1]?.content;
+    expect(sent).toEqual([
+      { type: 'text', text: 'что на картинке?' },
+      { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,QUJD' } },
+    ]);
+  });
+
+  it('Gemini: inline_data перед текстом', () => {
+    const req = PROVIDERS.gemini.chatRequest({ apiKey: 'k', model: 'm' }, 's', withImage);
+    const parts = (req.body?.contents as { parts: unknown }[])[0]?.parts;
+    expect(parts).toEqual([{ inline_data: { mime_type: 'image/jpeg', data: 'QUJD' } }, { text: 'что на картинке?' }]);
+  });
+
+  it('сообщения без картинок отправляются простым текстом', () => {
+    const req = PROVIDERS.anthropic.chatRequest({ apiKey: 'k', model: 'claude-haiku-5-5' }, 's', messages);
+    expect((req.body?.messages as { content: unknown }[])[0]?.content).toBe('привет');
   });
 });
 

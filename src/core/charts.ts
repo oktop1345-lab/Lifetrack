@@ -118,7 +118,8 @@ export function dataTable(headers: string[], rows: (string | number)[][]): HTMLE
 
 export interface BarSeries {
   label: string;
-  values: number[];
+  /** null - за эту точку данных нет (столбец не рисуется). */
+  values: (number | null)[];
   /** Обычный CSS-цвет. */
   color: string;
 }
@@ -130,6 +131,8 @@ export interface BarChartOptions {
   horizontal?: boolean;
   /** Верхняя граница оси, если она известна заранее (например, 100 для процентов). */
   max?: number;
+  /** Горизонтальная пунктирная линия-порог (например, лимит). */
+  limit?: number;
   formatTick?: (value: number) => string;
   /** Заголовок подсказки по номеру столбца и текст значения. */
   tooltipTitle?: (index: number) => string;
@@ -159,11 +162,26 @@ export function barChart(canvas: HTMLCanvasElement, opts: BarChartOptions): Char
     ticks: { color: theme.muted, font: tickFont(theme), maxRotation: 0, autoSkip: !opts.horizontal, autoSkipPadding: 10 },
   };
   const round = 4;
+  const limitLine =
+    opts.limit === undefined
+      ? []
+      : [
+          {
+            type: 'line',
+            label: 'limit',
+            data: opts.labels.map(() => opts.limit),
+            borderColor: cssVar('--text-3'),
+            borderWidth: 1.5,
+            borderDash: [5, 4],
+            pointRadius: 0,
+            pointHoverRadius: 0,
+          } as never,
+        ];
   return new Chart(canvas, {
     type: 'bar',
     data: {
       labels: opts.labels,
-      datasets: opts.series.map((series) => ({
+      datasets: [...opts.series.map((series) => ({
         label: series.label,
         data: series.values,
         backgroundColor: series.color,
@@ -174,7 +192,7 @@ export function barChart(canvas: HTMLCanvasElement, opts: BarChartOptions): Char
         maxBarThickness: multi ? 16 : 24,
         categoryPercentage: 0.8,
         barPercentage: multi ? 0.9 : 0.85,
-      })),
+      })), ...limitLine],
     },
     options: {
       indexAxis: opts.horizontal ? 'y' : 'x',
@@ -188,6 +206,7 @@ export function barChart(canvas: HTMLCanvasElement, opts: BarChartOptions): Char
         legend: { display: false },
         tooltip: {
           ...tooltipStyle(theme, multi),
+          filter: (item) => item.dataset.label !== 'limit',
           callbacks: {
             title: (items) => {
               const index = items[0]?.dataIndex ?? 0;

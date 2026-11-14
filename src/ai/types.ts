@@ -12,7 +12,15 @@ export interface AiSettings {
   configs: Record<ProviderId, ProviderConfig>;
 }
 
+/** Картинка для модели: тип ('image/jpeg') и содержимое в base64 без префикса. */
+export interface ChatImage {
+  mime: string;
+  data: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  /** Картинки к сообщению (нужна модель с поддержкой изображений). */
+  images?: ChatImage[];
 }

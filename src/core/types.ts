@@ -95,3 +95,31 @@ export interface SavingsGoal {
   deadline?: string;
   createdAt: string;
 }
+
+export interface ScreenApp {
+  name: string;
+  minutes: number;
+}
+
+/** Экранное время за один день (вносится вручную или по скриншоту). */
+export interface ScreenDay {
+  date: string;
+  totalMinutes: number;
+  apps: ScreenApp[];
+  /** Сон прошлой ночью, минут (необязательно) - для связи со сном. */
+  sleepMinutes?: number;
+  source: 'manual' | 'screenshot';
+}
+
+export type UrgeTrigger = 'boredom' | 'stress' | 'tired' | 'bedtime' | 'other';
+
+/** Запись «тянет скроллить». */
+export interface Urge {
+  id: string;
+  /** Момент времени, ISO. */
+  at: string;
+  trigger: UrgeTrigger;
+  note?: string;
+  /** Что сделал вместо скролла. */
+  insteadOf?: string;
+}

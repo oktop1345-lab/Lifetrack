@@ -75,7 +75,7 @@ describe('parseBackup', () => {
   });
 
   it('отклоняет таблицу, которая не является списком', () => {
-    const text = JSON.stringify({ app: 'life-tracker', schemaVersion: 1, tables: { habits: {} } });
+    const text = JSON.stringify({ app: 'life-tracker', schemaVersion: 1, tables: { habits: {} } }); // старый бэкап тоже читается
     expect(() => parseBackup(text)).toThrow(/повреждён/);
   });
 });

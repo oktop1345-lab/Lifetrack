@@ -80,7 +80,18 @@ const anthropic: ProviderDef = {
       max_tokens: 64000,
       stream: true,
       system,
-      messages,
+      messages: messages.map((message) => ({
+        role: message.role,
+        content: message.images?.length
+          ? [
+              ...message.images.map((image) => ({
+                type: 'image',
+                source: { type: 'base64', media_type: image.mime, data: image.data },
+              })),
+              { type: 'text', text: message.content },
+            ]
+          : message.content,
+      })),
     };
     if (ANTHROPIC_FALLBACK_MODELS.has(cfg.model)) {
       headers['anthropic-beta'] = ANTHROPIC_FALLBACK_BETA;
@@ -180,7 +191,21 @@ function openAiCompatible(
         body: {
           model: cfg.model,
           stream: true,
-          messages: [{ role: 'system', content: system }, ...messages],
+          messages: [
+            { role: 'system', content: system },
+            ...messages.map((message) => ({
+              role: message.role,
+              content: message.images?.length
+                ? [
+                    { type: 'text', text: message.content },
+                    ...message.images.map((image) => ({
+                      type: 'image_url',
+                      image_url: { url: `data:${image.mime};base64,${image.data}` },
+                    })),
+                  ]
+                : message.content,
+            })),
+          ],
         },
       };
     },
@@ -280,7 +305,10 @@ const gemini: ProviderDef = {
         system_instruction: { parts: [{ text: system }] },
         contents: messages.map((message) => ({
           role: message.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: message.content }],
+          parts: [
+            ...(message.images ?? []).map((image) => ({ inline_data: { mime_type: image.mime, data: image.data } })),
+            { text: message.content },
+          ],
         })),
       },
     };

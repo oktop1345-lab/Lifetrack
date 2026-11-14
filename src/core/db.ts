@@ -4,18 +4,20 @@ import type {
   Habit,
   HabitCheck,
   SavingsGoal,
+  ScreenDay,
   SettingRow,
   StudyGoal,
   StudySession,
   StudySubject,
   Transaction,
+  Urge,
   Workout,
 } from './types';
 
 export const DB_NAME = 'life-tracker';
 
 /** Номер последней версии схемы. Увеличивать вместе с новым db.version(n). */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export class AppDB extends Dexie {
   settings!: Table<SettingRow, string>;
@@ -28,6 +30,8 @@ export class AppDB extends Dexie {
   categories!: Table<Category, string>;
   transactions!: Table<Transaction, string>;
   savingsGoals!: Table<SavingsGoal, string>;
+  screenDays!: Table<ScreenDay, string>;
+  urges!: Table<Urge, string>;
 
   constructor() {
     super(DB_NAME);
@@ -43,6 +47,11 @@ export class AppDB extends Dexie {
       categories: 'id, kind',
       transactions: 'id, date, categoryId',
       savingsGoals: 'id',
+    });
+    // Версия 2: экранное время и записи «тянет скроллить».
+    this.version(2).stores({
+      screenDays: 'date',
+      urges: 'id, at',
     });
   }
 }
