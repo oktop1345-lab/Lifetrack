@@ -151,7 +151,7 @@ function sectionsCard(data: AllData, today: string): HTMLElement {
   const monthSpent = sumBetween(data.transactions, 'expense', month.from, month.to);
 
   // Тренировки: объём по неделям
-  const volumes = weeklyVolume(data.workouts, today, 7);
+  const volumes = weeklyVolume(data.workouts, today, 7, data.bodyWeight);
 
   // Учёба: минуты по дням
   const study = dailyMinutes(data.sessions, week);

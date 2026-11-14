@@ -42,5 +42,6 @@ export function sampleData(): AllData {
     currency: 'KZT',
     budget: 20000000,
     screenLimit: 180,
+    bodyWeight: null,
   };
 }

@@ -45,14 +45,20 @@ export function buildContext(data: AllData, today: string, days: number): string
   else {
     lines.push(`Тренировок: ${countBetween(data.workouts, from, today)}.`);
     lines.push('По типам: ' + typeDistribution(data.workouts, from, today).map((item) => `${item.type} ${item.count}`).join(', ') + '.');
-    const weeks = weeklyVolume(data.workouts, today, Math.min(8, Math.ceil(days / 7)));
+    const weeks = weeklyVolume(data.workouts, today, Math.min(8, Math.ceil(days / 7)), data.bodyWeight);
     lines.push('Объём по неделям, кг (от старых к новым): ' + weeks.map((week) => formatNumber(week.volume)).join(', ') + '.');
+    if (weeks.some((week) => week.bodyweightReps > 0)) {
+      lines.push(
+        'Повторения в упражнениях с собственным весом по неделям: ' + weeks.map((week) => week.bodyweightReps).join(', ') + '.' +
+          (data.bodyWeight ? ` Вес тела ${formatNumber(data.bodyWeight)} кг, он учтён в объёме.` : ' Вес тела не указан, в объём они не входят.'),
+      );
+    }
     for (const name of exerciseNames(workouts).slice(0, 6)) {
       const progressData = exerciseProgress(workouts, name);
       const first = progressData.points[0];
       const last = progressData.points[progressData.points.length - 1];
       if (!first || !last) continue;
-      const unit = progressData.unit === 'kg' ? 'кг' : 'повт.';
+      const unit = progressData.unit === 'kg' ? 'кг' : progressData.bodyweight ? 'повт. (свой вес)' : 'повт.';
       lines.push(
         `- ${name}: ${progressData.points.length} раз, лучший результат в начале ${formatNumber(first.value)} ${unit}, в конце ${formatNumber(last.value)} ${unit}`,
       );

@@ -34,7 +34,7 @@ export function overview(data: AllData, from: string, to: string): Overview {
     workouts: countBetween(data.workouts, from, to),
     volume: data.workouts
       .filter((workout) => workout.date >= from && workout.date <= to)
-      .reduce((sum, workout) => sum + workoutVolume(workout), 0),
+      .reduce((sum, workout) => sum + workoutVolume(workout, data.bodyWeight), 0),
     studyMinutes: totalMinutes(data.sessions, from, to),
     expense: sumBetween(data.transactions, 'expense', from, to),
     income: sumBetween(data.transactions, 'income', from, to),

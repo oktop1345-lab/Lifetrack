@@ -12,6 +12,8 @@ export interface AppSettings {
   studyTimer: StudyTimer | null;
   /** Тема оформления: светлая (по умолчанию), тёмная или как в системе. */
   theme: ThemeMode;
+  /** Вес тела, кг: нужен, чтобы считать объём упражнений с собственным весом. */
+  bodyWeightKg: number | null;
   /** Лимит экранного времени в сутки, минут. */
   screenLimitMinutes: number | null;
   firstRunAt: string | null;
@@ -59,6 +61,7 @@ function defaults(): AppSettings {
     studyTimer: null,
     theme: 'light',
     screenLimitMinutes: null,
+    bodyWeightKg: null,
     firstRunAt: null,
     lastBackupAt: null,
     backupSnoozedAt: null,

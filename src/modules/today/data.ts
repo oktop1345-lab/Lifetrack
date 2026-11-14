@@ -31,6 +31,8 @@ export interface AllData {
   currency: string;
   budget: number | null;
   screenLimit: number | null;
+  /** Вес тела, кг - для объёма упражнений с собственным весом. */
+  bodyWeight: number | null;
 }
 
 export async function loadAll(): Promise<AllData> {
@@ -49,6 +51,7 @@ export async function loadAll(): Promise<AllData> {
     currency,
     budget,
     screenLimit,
+    bodyWeight,
   ] = await Promise.all([
     db.habits.toArray(),
     db.habitChecks.toArray(),
@@ -64,6 +67,7 @@ export async function loadAll(): Promise<AllData> {
     getSetting('currency'),
     getSetting('monthlyBudget'),
     getSetting('screenLimitMinutes'),
+    getSetting('bodyWeightKg'),
   ]);
   habits.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   return {
@@ -81,5 +85,6 @@ export async function loadAll(): Promise<AllData> {
     currency,
     budget,
     screenLimit,
+    bodyWeight,
   };
 }

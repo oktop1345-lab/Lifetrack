@@ -25,6 +25,7 @@ export interface HabitCheck {
 }
 
 export interface WorkoutSet {
+  /** Вес, кг. Для упражнения с собственным весом - дополнительный вес (жилет, блин), обычно 0. */
   weight: number;
   reps: number;
 }
@@ -32,6 +33,8 @@ export interface WorkoutSet {
 export interface WorkoutExercise {
   name: string;
   sets: WorkoutSet[];
+  /** Упражнение с собственным весом (подтягивания, отжимания...). У старых записей поля нет. */
+  bodyweight?: boolean;
 }
 
 export interface Workout {
