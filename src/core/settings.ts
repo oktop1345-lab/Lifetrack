@@ -7,9 +7,19 @@ export interface AppSettings {
   /** Месячный бюджет в минимальных единицах валюты или null, если не задан. */
   monthlyBudget: number | null;
   ai: AiSettings;
+  /** Идущий таймер учёбы (считается от времени старта: iOS останавливает приложение в фоне). */
+  studyTimer: StudyTimer | null;
+  /** Лимит экранного времени в сутки, минут. */
+  screenLimitMinutes: number | null;
   firstRunAt: string | null;
   lastBackupAt: string | null;
   backupSnoozedAt: string | null;
+}
+
+export interface StudyTimer {
+  subjectId: string;
+  goalId?: string;
+  startedAt: string;
 }
 
 export const CURRENCIES: { code: string; label: string }[] = [
@@ -43,6 +53,8 @@ function defaults(): AppSettings {
     currency: 'KZT',
     monthlyBudget: null,
     ai: defaultAiSettings(),
+    studyTimer: null,
+    screenLimitMinutes: null,
     firstRunAt: null,
     lastBackupAt: null,
     backupSnoozedAt: null,

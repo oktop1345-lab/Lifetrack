@@ -14,7 +14,7 @@ export interface BackupFile {
 }
 
 /** Настройки, которые относятся к этому устройству и в бэкап не идут. */
-const DEVICE_ONLY_SETTINGS = new Set(['firstRunAt', 'lastBackupAt', 'backupSnoozedAt']);
+const DEVICE_ONLY_SETTINGS = new Set(['firstRunAt', 'lastBackupAt', 'backupSnoozedAt', 'studyTimer']);
 
 // ---------- Чистая логика (покрыта тестами) ----------
 
