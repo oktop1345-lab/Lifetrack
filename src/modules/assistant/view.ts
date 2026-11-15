@@ -1,5 +1,6 @@
 import { buildContext } from '../../ai/context';
 import { describeError } from '../../ai/errors';
+import { languageInstruction, replyLanguage, type ReplyLanguage } from '../../ai/language';
 import { activeProvider, configProblem, streamChat } from '../../ai/providers';
 import type { ChatMessage } from '../../ai/types';
 import { todayStr } from '../../core/dates';
@@ -24,16 +25,18 @@ type ContextDays = '7' | '30' | '90';
 // За какой период AI видит сводку. Запоминается, пока приложение открыто.
 let contextDays: ContextDays = '30';
 
-function systemPrompt(context: string): string {
+function systemPrompt(context: string, lang: ReplyLanguage): string {
   return [
     'Ты - ассистент внутри личного приложения «Трекер»: привычки, тренировки, учёба, финансы и экранное время одного человека.',
-    'Отвечай на русском языке, по делу и коротко: ответ читают на экране телефона.',
+    'Отвечай на том же языке, на котором написано последнее сообщение пользователя (русский или английский), по делу и коротко: ответ читают на экране телефона.',
     'Используй короткие абзацы и простые списки. Не используй таблицы.',
     'Ниже - сводка данных пользователя из приложения. Опирайся на эти числа и называй их в ответе.',
     'У тебя есть только итоги за период, без отдельных записей. Если для ответа чего-то не хватает, скажи об этом прямо и не выдумывай данные.',
     'Ты не можешь менять данные в приложении и не можешь блокировать другие приложения.',
     '',
     context,
+    '',
+    languageInstruction(lang),
   ].join('\n');
 }
 
@@ -207,7 +210,7 @@ export async function render(root: HTMLElement): Promise<Cleanup> {
     setBusy(true);
     try {
       const result = await streamChat(ai, {
-        system: systemPrompt(context),
+        system: systemPrompt(context, replyLanguage(history)),
         messages: history.slice(),
         signal: controller.signal,
         onDelta(delta) {
