@@ -415,7 +415,11 @@ textarea.input {
 
 .sheet-backdrop {
   position: fixed;
-  inset: 0;
+  /* Не весь экран, а его видимая часть: иначе низ шторки уходит под клавиатуру. */
+  top: var(--vv-top, 0px);
+  left: 0;
+  right: 0;
+  height: var(--app-h, 100dvh);
   z-index: 20;
   background: rgba(15, 15, 15, 0.5);
   display: flex;
@@ -435,6 +439,12 @@ textarea.input {
   box-shadow: 0 -1px 0 var(--line);
   padding-bottom: env(safe-area-inset-bottom);
   animation: rise 0.2s ease-out;
+}
+
+/* С клавиатурой шторке не нужен нижний отступ под полоску «домой», зато нужно больше места. */
+.kb-open .sheet {
+  max-height: calc(var(--app-h, 100dvh) - 8px);
+  padding-bottom: 0;
 }
 
 .sheet-head {
@@ -488,7 +498,7 @@ textarea.input {
 .toast {
   position: fixed;
   left: 50%;
-  top: calc(env(safe-area-inset-top) + 10px);
+  top: calc(var(--vv-top, 0px) + env(safe-area-inset-top) + 10px);
   transform: translateX(-50%);
   z-index: 30;
   max-width: min(92vw, 520px);

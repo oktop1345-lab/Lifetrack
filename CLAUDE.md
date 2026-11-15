@@ -36,6 +36,11 @@
 - Офлайн: всё, кроме AI, работает без сети. AI без сети показывает понятное сообщение.
 - Ошибки сети/CORS/неверного ключа показывать человеческим текстом, не пустым экраном.
 - Mobile-first: нижняя навигация, зоны нажатия от 44px, safe-area (`env(safe-area-inset-*)`).
+- Клавиатура iPhone (`core/keyboard.ts`): iOS уменьшает только видимую часть экрана, поэтому `#app` и
+  `.sheet-backdrop` - `position: fixed` с `top: var(--vv-top)` и `height: var(--app-h)` (из `visualViewport`),
+  а не `inset: 0`. Поле в фокусе само прокручивается над клавиатурой (`scrollDelta`). Не возвращать
+  `window.scrollTo(0, 0)` и не прижимать новые всплывающие элементы к низу через `inset`/`bottom: 0`.
+  Проверка - браузерный тест с поддельным `visualViewport` (высота экрана минус ~336px при фокусе).
 - Тема по умолчанию светлая, даже если iPhone в тёмном режиме (просьба владельца). В настройках можно
   выбрать «Тёмная» или «Как в iPhone». Логика - `core/theme.ts`: класс `theme-dark` на `<html>`,
   выбор в настройке `theme` и копия в localStorage (чтобы экран не мигал при запуске).
@@ -66,7 +71,7 @@ lifetrack/
   .github/workflows/deploy.yml
   src/
     main.ts               запуск: каркас (шапка со значком раздела, навигация), роутер, persist(),
-                          напоминание о бэкапе, подгонка высоты под клавиатуру iPhone
+                          напоминание о бэкапе, initKeyboard()
     routes.ts             список экранов - новый модуль подключается одной строкой здесь
     core/
       db.ts               схема Dexie (все таблицы и версии), newId(), SCHEMA_VERSION
@@ -80,6 +85,7 @@ lifetrack/
       money.ts            formatMoney (знак валюты через narrowSymbol), formatMoneyShort, parseMoney
       markdown.ts         разбор и отрисовка Markdown для ответов AI (без innerHTML)
       pwa.ts              service worker, проверка обновления, persist(), isStandalone()
+      keyboard.ts         клавиатура iPhone: --app-h, --vv-top, класс kb-open, прокрутка поля в фокусе
       theme.ts            тема: applyTheme, storedTheme, watchSystemTheme (событие 'themechange')
       backup.ts           экспорт/импорт JSON, очистка, напоминание раз в неделю
       settings.ts         чтение/запись настроек, список валют

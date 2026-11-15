@@ -2,6 +2,7 @@ import './styles/base.css';
 import './styles/components.css';
 
 import { backupState, exportData, hasUserData, isBackupDue } from './core/backup';
+import { initKeyboard } from './core/keyboard';
 import { initPwa, requestPersistence } from './core/pwa';
 import { applyTheme, storedTheme, watchSystemTheme, type ThemeMode } from './core/theme';
 import { navigate, startRouter, type RouteDef } from './core/router';
@@ -87,20 +88,8 @@ async function showBackupReminder(): Promise<void> {
 }
 
 // ---------- Клавиатура iPhone ----------
-// Когда открывается клавиатура, видимая часть экрана уменьшается. Подгоняем под неё высоту приложения,
-// чтобы поле ввода оставалось на виду.
-
-function syncViewport(): void {
-  const vv = window.visualViewport;
-  if (!vv) return;
-  document.documentElement.style.setProperty('--app-h', `${vv.height}px`);
-  document.documentElement.classList.toggle('kb-open', window.innerHeight - vv.height > 120);
-  if (vv.offsetTop > 0) window.scrollTo(0, 0);
-}
-
-window.visualViewport?.addEventListener('resize', syncViewport);
-window.visualViewport?.addEventListener('scroll', syncViewport);
-syncViewport();
+// Приложение и шторки подгоняются под видимую часть экрана, поле ввода остаётся над клавиатурой.
+initKeyboard();
 
 // ---------- Запуск ----------
 
